@@ -120,6 +120,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"unsafe"
 )
 
 var (
@@ -137,10 +138,10 @@ func init() {
 		defer C.free(unsafe.Pointer(cengine))
 
 		engine := C.ENGINE_by_id(cengine)
-		if engine.e == nil {
-			panic("OpenSSL Engine [%s] missing", defaultEngine)
+		if engine == nil {
+			panic(fmt.Errorf("OpenSSL Engine [%s] missing", defaultEngine))
 		}
-		C.ENGINE_set_default(engine, ENGINE_METHOD_ALL)
+		C.ENGINE_set_default(engine, C.ENGINE_METHOD_ALL)
 	}
 
 	C.SSL_load_error_strings()
