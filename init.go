@@ -117,6 +117,7 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 )
@@ -128,6 +129,20 @@ var (
 func init() {
 	C.OPENSSL_config(nil)
 	C.ENGINE_load_builtin_engines()
+	C.ENGINE_register_all_complete()
+
+	defaultEngine := os.Getenv("OPENSSL_ENGINE")
+	if defaultEngine != "" {
+		cengine := C.CString(defaultEngine)
+		defer C.free(unsafe.Pointer(cengine))
+
+		engine := C.ENGINE_by_id(cengine)
+		if engine.e == nil {
+			panic("OpenSSL Engine [%s] missing", defaultEngine)
+		}
+		C.ENGINE_set_default(engine, ENGINE_METHOD_ALL)
+	}
+
 	C.SSL_load_error_strings()
 	C.SSL_library_init()
 	C.OpenSSL_add_all_algorithms_not_a_macro()
